@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from ntaxon.nucleotide.sequence import Sequence
-
+from ntaxon.fingerprinting.matrix import BinaryMatrix
 
 class RestrictionDigestionAlignment:
     aligned_fragments = None
@@ -51,7 +51,7 @@ class RestrictionDigestion:
 
         digestion_bin = digestion_bin.sort_values(by=["size"], axis=0, ascending=False)
 
-        self.digestion_profile = digestion_bin
+        self.digestion_profile = BinaryMatrix(data=digestion_bin, locus_name=enzyme.__name__, size_column="size")
 
     def plot_histogram(self, figsize=(14, 8)):
         plt.figure(figsize=figsize)
@@ -60,7 +60,7 @@ class RestrictionDigestion:
 
     def plot_electrophoretic_diagram(self, figsize=(16, 10)):
         plt.figure(figsize=figsize)
-        ax = sns.heatmap(self.digestion_profile.drop('size', axis=1), cmap="YlGnBu", cbar=False)
+        ax = sns.heatmap(self.digestion_profile.get_binary_matrix(), cmap="YlGnBu", cbar=False)
         plt.show()
 
     def get_fragment_alignment(self):

@@ -1,0 +1,2 @@
+class GelScoring:
+    pass
