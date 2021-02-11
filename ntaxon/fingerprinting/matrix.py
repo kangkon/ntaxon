@@ -117,6 +117,17 @@ class BinaryMatrix(pd.DataFrame):
     def shape(self):
         return self.__binary_matrix.shape
 
+    def sort(self):
+        """
+        Sort sample order by similarity
+
+        :return: Binarymatrix - sorted binary matrix
+        """
+        # TODO: Sort by similarity
+        matrix = self.__binary_matrix
+        print("Sorted matrix")
+        return 0
+
     def band_count(self, presence=True, samples=None, samplewise=False):
         """
         Counts bands in a binary matrix. Returns a series with index equivalent to binary matrix
@@ -128,7 +139,7 @@ class BinaryMatrix(pd.DataFrame):
         samples : ndarray, optional
             The array of sample or column names.
         samplewise : bool, optional
-            Sample wise Band Count
+            For returning sample wise Band Count
         """
         matrix = self.__binary_matrix
         if samples:
@@ -160,24 +171,24 @@ class BinaryMatrix(pd.DataFrame):
             return self.band_count(samples=samples).sum()
         return self.__binary_matrix.shape[0]
 
-    def band_frequency(self, singular=True, samples=None):
+    def band_frequency(self, singular=True, presence=True, samples=None):
         """
         Calculate Allele frequency
 
         Parameters
         ----------
         singular : bool
-            True: Calculate frequency of individual band based on total occurrence for a particular bands
-            False: Calculate frequency of individual band based on total occurrence of all bands
+            True: Calculate frequency of individual band based on total occurrence of that particular band
+            False: Calculate frequency of individual band based on total occurrence of all bands in matrix
         samples : ndarray
             The array of sample or column names.
         """
 
-        # TODO; Evaluate the frequency for singular param
-
-        #if singular:
-        #    return
-
+        if singular:
+            if samples:
+                return self.band_count(presence=presence, samples=samples) / len(samples)
+            else:
+                return self.band_count(presence=presence) / self.__sample_count
 
         return self.band_count(presence=True, samples=samples)/self.total_bands(unique=False, samples=samples)
 
@@ -207,36 +218,178 @@ class BinaryMatrix(pd.DataFrame):
     def percent_polymorphism(self, samples=None):
         return self.polymorphic_band_count(samples=samples) * 100/self.total_bands(samples=samples)
 
-    def get_marker_frequency(self):
+    def marker_frequency(self, samples=None):
+        """
+        Calculates Marker Frequency
+
+        :param samples: ndarray, optional: List of selected samples
+
+        :return: Marker Frequency
+        """
+        if samples is not None:
+            return self.total_bands(unique=False, samples=samples) / (self.total_bands(unique=True, samples=samples) * len(samples))
         return self.total_bands(unique=False) / (self.total_bands(unique=True) * self.__sample_count)
 
-    def pic_dominant_1(self):
+    def heterozygosity(self, singular=False, samples=None):
+        """
+        Calculate Heterozygosity for current marker depending on frequency of homozygous individuals
+        H = 1 - SUM(p_i^2), where p = frequency of i th allele (Nei, 1978)
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        sigma_pi = 0
+        for band in self.__binary_matrix.index.to_list():
+            sigma_pi = sigma_pi + np.square(allele_frequency.loc[band])
+
+        return 1 - sigma_pi
+
+    def heterozygosity_2(self, singular=False, samples=None):
+        """
+        Calculate Heterozygosity for current marker depending on frequency of heterozygous individuals
+        H = 1 - PRODUCT(2 * p_i), where p = frequency of i th allele
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        product_pi = 1
+        for band in self.__binary_matrix.index.to_list():
+            product_pi = product_pi * 2 * allele_frequency.loc[band]
+
+        return product_pi
+
+    def pic_dominant_1(self, samples=None):
         """
         Calculate Polymorphic Information Content for a Dominant marker (Roldan-Ruiz et al., 2000)
         PIC = 2f(1-f)
 
+        :param samples: ndarray, optional: List of selected samples
+
         :return: A list of PIC for individual bands/allele or average PIC value
         """
-        marker_frequency = self.get_marker_frequency()
+        marker_frequency = self.marker_frequency(samples=samples)
         return 2 * marker_frequency * (1 - marker_frequency)
 
-    def pic_dominant_2(self):
+    def pic_dominant_2(self, samples=None):
         """
         Calculate Polymorphic Information Content for a Dominant marker (De Riek et al., 2001)
         PIC = 1 - [f^2 + (1 - f)^2]
 
+        :param samples: ndarray, optional: List of selected samples
+
         :return: A list of PIC for individual bands/allele or average PIC value
         """
-        marker_frequency = self.get_marker_frequency()
+        marker_frequency = self.marker_frequency(samples=samples)
         return 1 - (np.square(marker_frequency) + np.square((1 - marker_frequency)))
 
-    def pic_dominant_3(self, average=True):
+    def pic_dominant_3(self, mean=True, samples=None):
         """
         Calculate Polymorphic Information Content for a Dominant marker
         PIC = 1 - (p^2 + q^2), where p = frequency of presence and q = frequency of absence in a particular allele
 
-        :param average: (boolean) Output The average PIC
+        :param mean: (boolean) Output The average PIC
+        :param samples: (ndarray) List of selected samples
 
         :return: A list of PIC for individual bands/allele or average PIC value
         """
+        p = self.band_frequency(presence=True, samples=samples)
+        q = self.band_frequency(presence=False, samples=samples)
+
+        pic = 1 - (np.square(p) + np.square(q))
+
+        if mean:
+            return pic.mean()
+
+        return pic
+
+    def pic_codominant_1(self, singular=False, samples=None):
+        """
+        Calculate Polymorphic Information Content for a Dominant marker
+        PIC = 1 - SUM(p_i^2), where p = frequency of i th allele
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        sigma_pi = 0
+        for band in self.__binary_matrix.index.to_list():
+            sigma_pi = sigma_pi + np.square(allele_frequency.loc[band])
+
+        return 1 - sigma_pi
+
+    def pic_codominant_2(self, singular=False, samples=None):
+        """
+        Calculate Polymorphic Information Content for a Codominani marker
+        PIC = 1 - SUM(P_i^2) - (SUM(P_i^2])^2 + SUM(P_i^4), where p = frequency of i th allele
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        sigma_pi_sq = 0
+        sigma_pi_4 = 0
+        for band in self.__binary_matrix.index.to_list():
+            sigma_pi_sq = sigma_pi_sq + np.square(allele_frequency.loc[band])
+            sigma_pi_4 = sigma_pi_4 + np.power(allele_frequency.loc[band], 4)
+
+        return 1 - sigma_pi_sq - np.square(sigma_pi_sq) + sigma_pi_4
+
+    def pic_codominant_2(self, singular=False, samples=None):
+        """
+        Calculate Polymorphic Information Content for a Codominant marker
+        PIC = 1 - SUM(P_i^2) - (SUM(P_i^2])^2 + SUM(P_i^4), where p = frequency of i th allele
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        sigma_pi_sq = 0
+        sigma_pi_4 = 0
+        for band in self.__binary_matrix.index.to_list():
+            sigma_pi_sq = sigma_pi_sq + np.square(allele_frequency.loc[band])
+            sigma_pi_4 = sigma_pi_4 + np.power(allele_frequency.loc[band], 4)
+
+        return 1 - sigma_pi_sq - np.square(sigma_pi_sq) + sigma_pi_4
+
+    def pic_codominant_3(self, singular=False, samples=None):
+        """
+        Calculate Polymorphic Information Content for a Codominant marker for population i and j (Botstein, 1980)
+
+        :param samples: (ndarray) List of selected samples
+        :param singular: (Bool) True - Calculate frequency of individual band based on total occurrence of that particular band;
+                        False -  Calculate frequency of individual band based on total occurrence of all bands in matrix
+
+        :return: PIC value
+        """
+        alleles = self.__binary_matrix.index.to_list()
+        allele_frequency = self.band_frequency(singular=singular, samples=samples)
+        sigma_pi_sq = 0
+
+        # band here represents an allele
+        for allele in alleles:
+            sigma_pi_sq = sigma_pi_sq + np.square(allele_frequency.loc[allele])
+
+        sigma_pi_pj = 0
+        for i in range(len(allele) - 1):
+            for j in range(i + 1, len(allele)):
+                sigma_pi_pj = sigma_pi_pj + 2 * np.square(allele_frequency.iloc[i]) * np.square(allele_frequency.iloc[j])
+
+        return 1 - sigma_pi_sq + sigma_pi_pj
 

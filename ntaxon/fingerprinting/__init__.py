@@ -1,1 +1,1 @@
-from . import *
+from .matrix import BinaryMatrix
