@@ -61,6 +61,14 @@ class BinaryMatrix(pd.DataFrame):
         # TODO Validate sizes matrix input
         self.__size_matrix = sizes
 
+    def get_columns(self):
+        return self.__binary_matrix.columns
+
+    def add_columns(self, columns, value=0):
+        matrix_bin = self.__binary_matrix
+        matrix_bin.loc[:, columns] = value
+        self.__binary_matrix = matrix_bin
+
     def join(self, matrix):
         """
         Join Two Binary Matrix and returns a combined a BinaryMatrix

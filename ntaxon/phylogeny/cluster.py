@@ -27,6 +27,8 @@ def screen_methods(data: BinaryMatrix) -> pd.DataFrame:
                     'sokalsneath', 'yule']
     linkage_methods = ['average', 'median', 'single', 'complete', 'centroid', 'ward']
 
+    # TODO Compute custom distance methods such as Nei and Li
+
     for _dm in distance_methods:
         mat = data
         if isinstance(data, BinaryMatrix):
@@ -43,7 +45,9 @@ def screen_methods(data: BinaryMatrix) -> pd.DataFrame:
 
 
 def optimal_clustering_params(data: BinaryMatrix, monotonic=True):
+    # TODO: Fix broken
     res = screen_methods(data)
     res = res[res['Monotony'] == monotonic]
+    print(res)
     print(res.iloc[1]['Distance', 'Linkage'])
     #return tuple(res.iloc[1]['Distance', 'Linkage'].to_list())
