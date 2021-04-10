@@ -1,0 +1,38 @@
+,species,haplotypes,haplotype_sizes
+0,Achromobacter marplatensis,"['404_1', '498_1']","['404', '498']"
+1,Acinetobacter rudis,"['129_1', '146_1', '356_1']","['129', '146', '356']"
+2,Advenella kashmirensis,['404_1'],['404']
+3,Alcaligenes faecalis,[],[]
+4,Bacillus aerius,"['407_1', '501_1']","['407', '501']"
+5,Bacillus aryabhattai,"['146_1', '357_1', '406_1']","['146', '357', '406']"
+6,Bacillus cereus,"['146_1', '355_1', '406_1']","['146', '355', '406']"
+7,Bacillus haynesii,"['406_1', '501_1']","['406', '501']"
+8,Bacillus kochii,"['146_1', '357_1', '406_1']","['146', '357', '406']"
+9,Bacillus licheniformis,['406_1'],['406']
+10,Bacillus pseudomycoides,"['146_1', '355_1']","['146', '355']"
+11,Bacillus safensis,"['406_1', '501_1']","['406', '501']"
+12,Bacillus subtilis,['406_1'],['406']
+13,Bacillus velezensis,['407_1'],['407']
+14,Bacillus weidmannii,"['146_1', '355_1', '406_1', '448_1', '86_1']","['146', '355', '406', '448', '86']"
+15,Brevibacillus agrii,"['146_1', '355_1', '406_1', '86_1']","['146', '355', '406', '86']"
+16,Brevundimonas diminuta,['479_1'],['479']
+17,Brevundimonas naejangsanensis,"['404_1', '479_1']","['404', '479']"
+18,Curtobacterium oceanosedimentum,"['147_1', '150_1', '155_1', '205_1', '252_1']","['147', '150', '155', '205', '252']"
+19,Exiguobacterium aquaticum,"['146_1', '406_1']","['146', '406']"
+20,Janibacter melonis,"['147_1', '155_1', '252_1', '354_1']","['147', '155', '252', '354']"
+21,Lysinibacillus fusiformis,"['406_1', '503_1']","['406', '503']"
+22,Ochrobactrum anthropi,"['503_1', '718_1']","['503', '718']"
+23,Ochrobactrum pseudogrignonense  ,"['502_1', '790_1', '81_1']","['502', '790', '81']"
+24,Paenibacillus lautus,"['147_1', '405_1']","['147', '405']"
+25,Paenibacillus taichungensis,"['146_1', '405_1']","['146', '405']"
+26,Planococcus massiliensis,"['146_1', '357_1', '406_1']","['146', '357', '406']"
+27,Pseudomonas putida,"['146_1', '357_1']","['146', '357']"
+28,Pseudomonas umsongensis,"['146_1', '357_1']","['146', '357']"
+29,Rhodococcus qingshengii,"['147_1', '171_1', '235_1', '355_1']","['147', '171', '235', '355']"
+30,Serratia marcescens,[],[]
+31,Sporosarcina globispora,"['171_1', '235_1', '503_1']","['171', '235', '503']"
+32,Sporosarcina koreensis,"['146_1', '171_1', '235_1', '357_1']","['146', '171', '235', '357']"
+33,Sporosarcina koreensis ,"['146_1', '171_1', '235_1', '357_1', '424_1', '88_1']","['146', '171', '235', '357', '424', '88']"
+34,Stenotrophomonas maltophilia,"['162_1', '342_1', '406_1']","['162', '342', '406']"
+35,Stenotrophomonas pavanii,"['162_1', '342_1', '406_1']","['162', '342', '406']"
+36,Stenotrophomonas rhizophilia,"['162_1', '342_1', '406_1']","['162', '342', '406']"
