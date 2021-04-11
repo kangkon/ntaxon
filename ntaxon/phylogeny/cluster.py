@@ -32,7 +32,7 @@ def screen_methods(data: BinaryMatrix) -> pd.DataFrame:
     for _dm in distance_methods:
         mat = data
         if isinstance(data, BinaryMatrix):
-            mat = data.get_binary_matrix()
+            mat = data.to_df()
         _pdist_val = 1 - distance.pdist(mat, _dm)
 
         if not any(_pdist_val < 0):  # check if any negative value in distance matrix
