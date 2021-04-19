@@ -120,7 +120,8 @@ def sitescrunch2(sites, i, j, alias, aliasweight):
 
 def neili(X, neili=False, restsites=True, sitelength=6, ttratio=2.0, gama=False, cvi=0.0):
     """
-    Calculates ``Nei and Li (1979)`` genetic distnace on a binary matrix (preferably from RFLP test)
+    Calculates ``Nei and Li (1979)`` genetic distnace on a binary matrix (preferably from RFLP test),
+    Containing sample as Rows and haplotypes as Columns
 
     Parameters
     ----------

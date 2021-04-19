@@ -86,7 +86,7 @@ def reynolds(x):
 
 def squareform_to_dist(X, names = None):
     """
-    Converts a matrix X of scipy squareform or vector-form distance vecto
+    Converts a matrix X of scipy squareform or vector-form distance vector
     to Biopython DistanceMatrix
 
     Parameters

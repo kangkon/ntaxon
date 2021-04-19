@@ -1,12 +1,22 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+from Bio import SeqIO
 from ntaxon.nucleotide import Sequence
 from ntaxon.fingerprinting import BinaryMatrix
 
 
-class RestrictionFragmentTable:
+class _RestrictionFragmentMap:
+    __data_df = pd.DataFrame()
+    
+    def __init__(self, map: pd.DataFrame):
+        self.__data_df = map
+    
+    def to_df(self):
+        return self.__data_df
+    
+    
+
+class _RestrictionFragmentTable:
     __data_df = pd.DataFrame()
 
     def __init__(self, fragments: pd.DataFrame):
@@ -22,7 +32,7 @@ class RestrictionFragmentTable:
         :param size_min: Int - Minimum fragment size to consider
         :param similarity_max: Maximum similarity consideration for seq based comparision
 
-        :return: Filtered RestrictionFragmentTable
+        :return: Filtered _RestrictionFragmentTable
         """
         # TODO Validate Inputs
         pass
@@ -32,21 +42,42 @@ class RestrictionFragmentTable:
 
 
 class RestrictionDigestion:
-    __restriction_enzyme = None     # Biopython RestrictionEnzyme
-    __species_names = None          # PD Series
-    __accessions = None             # PD DataFrame
-    __fragments = None              # PD DataFrame
-    __binary_matrix = None          # PD DataFrame
+    __restriction_enzyme = None         # Biopython RestrictionEnzyme
+    __species_names = None              # PD Series
+    __accessions = None                 # PD DataFrame
+    __fragments = None                  # PD DataFrame
+    __map = None                        # PD DataFrame of restriction site locations
+    __binary_matrix_size = None         # PD DataFrame
+    __binary_matrix_map = None          # PD DataFrame
 
-    @property
-    def binary_matrix(self):
-        return self.__binary_matrix
+    # TODO: Develop method for binary matrix based on fragment similarity
+    __binary_matrix_fragments = None    # PD DataFrame of binary matrix of similar sequences
+
+    def binary_matrix(self, of='map'):
+        return self.__binary_matrix_map
 
     @property
     def fragments(self):
         return self.__fragments
 
-    def __init__(self, enzyme, accessions: pd.DataFrame, label_col: str = 'sample', sequence_col: str = 'sequence'):
+    def __init__(self, enzyme, fasta, descriptors=None):
+        if fasta is None:
+            raise Exception('Invalid Input')
+
+        seq_list = []
+        for record in SeqIO.parse(fasta, "fasta"):
+            seq_list.append([record.id, str(record.seq)])
+
+        self.__accessions = pd.DataFrame(data=seq_list, columns=['sample', 'sequence'])
+        self.__restriction_enzyme = enzyme
+
+        self.__fragments = self.__perform_restriction_digestion()
+        self.__map = self.__perform_restriction_search()
+
+        self.__binary_matrix_size = self.__construct_fragment_binary_matrix()
+        self.__binary_matrix_map = self.__construct_map_binary_matrix()
+
+    def __init_from_df(self, enzyme, accessions: pd.DataFrame, label_col: str = 'sample', sequence_col: str = 'sequence'):
         """
         :param enzyme: Biopython Restriction Enzyme Class
         :param accessions: Accession having sequences
@@ -67,7 +98,25 @@ class RestrictionDigestion:
         self.__restriction_enzyme = enzyme
 
         self.__fragments = self.__perform_restriction_digestion()
-        self.__binary_matrix = self.__construct_binary_matrix()
+        self.__binary_matrix_size = self.__construct_fragment_binary_matrix()
+        self.__binary_matrix_map = self.__construct_map_binary_matrix()
+
+    def __perform_restriction_search(self):
+        """
+        Performs Restriction Location Search on Nucleotide Sequences
+        """
+        accessions = self.__accessions
+        r_map_df = pd.DataFrame(columns=['sample', 'location'])
+        for i, r in accessions.iterrows():
+            s = Sequence(r['sequence'])
+            r_maps = s.restriction_search(self.__restriction_enzyme)
+            for m in r_maps:
+                r_map_df = r_map_df.append({
+                    'sample': r['sample'],
+                    'location': m
+                }, ignore_index=True)
+        return _RestrictionFragmentMap(map=r_map_df)
+        
 
     def __perform_restriction_digestion(self):
         """
@@ -77,7 +126,7 @@ class RestrictionDigestion:
         :param label_col: str - Name of Column for Sample Labels
         :param sequence_col: str - Name of Column for Sample DNA/RNA Sequence
 
-        :return: RestrictionFragmentTableProfile - Digestion Profile Matrix
+        :return: _RestrictionFragmentTableProfile - Digestion Profile Matrix
         """
         accessions = self.__accessions
         digestion = pd.DataFrame(columns=['size', 'sample', 'fragment'])
@@ -105,9 +154,9 @@ class RestrictionDigestion:
         if species_names is not None:
             digestion['species'] = digestion.apply(get_species_name, axis = 1).astype('category')
 
-        return RestrictionFragmentTable(digestion)
+        return _RestrictionFragmentTable(digestion)
 
-    def __construct_binary_matrix(self):
+    def __construct_fragment_binary_matrix(self):
         """
         Construct binary matrix from digestion profile
         :return: BinaryMatrix
@@ -137,3 +186,14 @@ class RestrictionDigestion:
             matrix_bin.add_sample(columns=excluded_samples, value=0)
 
         return matrix_bin
+    
+    def __construct_map_binary_matrix(self):
+        map = self.__map.to_df()
+
+        # Convert to binary matrix
+        bin_df = pd.crosstab(map['location'], map['sample'])
+
+        # Mimic restriction location as size column
+        bin_df['size'] = list(bin_df.index)
+        # return BinaryMatrix(data=bin_df.reset_index(drop=True), locus_name=self.__restriction_enzyme.__name__)
+        return BinaryMatrix(data=bin_df, locus_name=self.__restriction_enzyme.__name__)

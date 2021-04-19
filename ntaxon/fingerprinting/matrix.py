@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.spatial import distance
 
 
 class BinaryMatrix():
@@ -15,7 +16,7 @@ class BinaryMatrix():
 
     Methods
     -------
-    get___binary_matrix_df() : DataFrame
+    to_df() : DataFrame
         Binary Matrix of 0 for fragment absence and 1 for fragment presence
 
     """
@@ -66,10 +67,10 @@ class BinaryMatrix():
         #TODO: check data to be in proper format
         self.locus_name = locus_name
 
-        if size_column:
+        if size_column in list(data.columns):
             data = data.rename(columns={size_column: "size"})
         else:
-            data['size'] = [i for i in reversed(range(data.shape[1]))]
+            data['size'] = [i for i in range(data.shape[0], 0, -1)]
 
         # Convert index values to string
         data.index.map(str)
@@ -99,11 +100,26 @@ class BinaryMatrix():
         self.__fragment_sizes = self.__binary_data_matrix_df["size"]
         self.__sample_count = self.__binary_data_matrix_df.shape[1] - 1
 
-    def to_df(self, size=False):
+    def to_df(self, size=False, transpose=False):
+        out = self.__binary_matrix_df
         if size:
-            return self.__binary_data_matrix_df
+            out = self.__binary_data_matrix_df
 
-        return self.__binary_matrix_df
+        if transpose:
+            return out.transpose()
+
+        return out
+
+    def to_list(self, size=False, transpose=False):
+        data = self.__binary_data_matrix_df
+
+        if transpose:
+            data = data.transpose()
+
+        if size:
+            return data.values.tolist()
+
+        return data.values.tolist()
 
     def to_df_bool(self):
         return self.__boolean_matrix_df
@@ -674,3 +690,12 @@ class BinaryMatrix():
         plt.figure(figsize=figsize)
         ax = sns.heatmap(matrix_bin_data, cmap="YlGnBu", cbar=False)
         plt.show()
+
+    def distance(self, method='jaccard', squareform=False):
+        binary_data = self.__binary_matrix_df.transpose() # Required rows as Samples, columns as Haplotypes
+        pdist_vector = 1 - distance.pdist(binary_data, method)
+
+        if squareform:
+            return distance.squareform(pdist_vector)
+
+        return pdist_vector
